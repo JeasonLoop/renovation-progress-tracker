@@ -1,0 +1,120 @@
+import type { BudgetCategory, MaterialCategory, RenovationData } from "./types";
+
+export const defaultMaterialCategories: MaterialCategory[] = [
+  { id: "tiles", name: "瓷砖", unit: "片", guidance: "关注规格、批次色差、吸水率、损耗和补货周期。" },
+  { id: "flooring", name: "地板", unit: "㎡", guidance: "比较材质、环保等级、耐磨性、安装辅料和损耗。" },
+  { id: "paint", name: "涂料", unit: "桶", guidance: "核对型号、容量、环保认证、涂布率和调色补漆条件。" },
+  { id: "doors", name: "门窗", unit: "樘", guidance: "确认洞口尺寸、型材、玻璃、五金、密封和安装周期。" },
+  { id: "cabinetry", name: "橱柜定制", unit: "延米", guidance: "比较板材、封边、五金、计价方式、复尺和安装节点。" },
+  { id: "bathroom", name: "卫浴洁具", unit: "件", guidance: "提前核对坑距、排水方式、尺寸、釉面、五金和售后。" },
+  { id: "lighting", name: "灯具照明", unit: "套", guidance: "关注尺寸、色温、显色指数、功率、眩光和驱动质保。" },
+  { id: "electrical", name: "开关插座", unit: "个", guidance: "核对系列颜色、底盒兼容性、载流规格和全屋数量。" },
+  { id: "appliances", name: "家电", unit: "台", guidance: "先锁定尺寸、功率、散热和水电条件，再比较价格与售后。" },
+  { id: "other", name: "其他材料", unit: "件", guidance: "记录规格、使用位置、数量、交期和选择理由。" },
+];
+
+export const defaultBudgetCategories: BudgetCategory[] = [
+  { id: "design", name: "设计费" },
+  { id: "construction", name: "施工费" },
+  { id: "main-material", name: "主材" },
+  { id: "auxiliary-material", name: "辅材" },
+  { id: "furniture", name: "家具" },
+  { id: "appliance", name: "家电" },
+  { id: "soft-decoration", name: "软装" },
+  { id: "other-budget", name: "其他" },
+];
+
+export const initialData: RenovationData = {
+  version: 4,
+  project: {
+    name: "云栖小家",
+    homeType: "三室两厅",
+    area: 112,
+    budget: 320000,
+    spent: 126840,
+    startDate: "2026-06-18",
+    targetDate: "2026-10-25",
+  },
+  stages: [
+    { id: "prepare", name: "设计准备", order: 1, status: "completed" },
+    { id: "demolition", name: "拆改", order: 2, status: "completed" },
+    { id: "plumbing", name: "水电", order: 3, status: "active" },
+    { id: "masonry", name: "泥瓦", order: 4, status: "upcoming" },
+    { id: "carpentry", name: "木作吊顶", order: 5, status: "upcoming" },
+    { id: "painting", name: "油漆墙面", order: 6, status: "upcoming" },
+    { id: "installation", name: "安装收尾", order: 7, status: "upcoming" },
+  ],
+  tasks: [
+    { id: "t1", title: "确认全屋开关插座点位", stageId: "plumbing", space: "全屋", dueDate: "2026-07-28", status: "done", priority: "important" },
+    { id: "t2", title: "厨房冷热水管打压测试", stageId: "plumbing", space: "厨房", dueDate: "2026-07-29", status: "review", priority: "important" },
+    { id: "t3", title: "拍摄封槽前管线全景", stageId: "plumbing", space: "全屋", dueDate: "2026-07-30", status: "doing", priority: "important" },
+    { id: "t4", title: "核对卫生间地漏位置", stageId: "plumbing", space: "主卫", dueDate: "2026-07-31", status: "todo", priority: "normal" },
+    { id: "t5", title: "确定瓷砖排版方案", stageId: "masonry", space: "厨卫", dueDate: "2026-08-04", status: "todo", priority: "normal" },
+    { id: "t6", title: "预约防水材料进场", stageId: "masonry", space: "卫生间", dueDate: "2026-08-05", status: "todo", priority: "normal" },
+  ],
+  inspections: [
+    { id: "c1", title: "强弱电是否分管敷设", stageId: "plumbing", space: "全屋", status: "passed", method: "沿管线逐段查看，重点检查交叉位置。", reference: "强弱电分别穿管，交叉处做好屏蔽保护。", evidenceCount: 0 },
+    { id: "c2", title: "水管打压后压力是否稳定", stageId: "plumbing", space: "厨房", status: "pending", method: "按管材厂家要求打压并记录起止读数。", reference: "具体压力与保压时间以厂家说明为准。", evidenceCount: 0 },
+    { id: "c3", title: "排水管是否有倒坡", stageId: "plumbing", space: "主卫", status: "unchecked", method: "放水观察排水速度，使用水平尺复核坡向。", reference: "排水应顺畅，无积水和倒坡。", evidenceCount: 0 },
+    { id: "c4", title: "线盒位置是否端正牢固", stageId: "plumbing", space: "客厅", status: "failed", method: "轻推线盒并用水平尺检查。", reference: "线盒牢固、横平竖直，标高符合点位图。", evidenceCount: 0 },
+  ],
+  materialCategories: defaultMaterialCategories,
+  materials: [
+    { id: "m1", categoryId: "tiles", usage: "厨房墙面", brand: "东鹏", model: "云灰 600x1200", price: 168, warranty: "按批次验货", leadTime: "5 天", status: "researching", note: "纹理自然，需确认同批次色差" },
+    { id: "m2", categoryId: "tiles", usage: "厨房墙面", brand: "马可波罗", model: "浅岩 600x1200", price: 186, warranty: "破损补发", leadTime: "7 天", status: "selected", note: "颜色更耐看，已让商家留货" },
+    { id: "m3", categoryId: "tiles", usage: "厨房墙面", brand: "蒙娜丽莎", model: "银砂 600x1200", price: 152, warranty: "按批次验货", leadTime: "4 天", status: "researching", note: "预算友好，表面略亮" },
+  ],
+  budgetCategories: defaultBudgetCategories,
+  budgetItems: [
+    { id: "b1", categoryId: "design", name: "全屋设计服务", budgeted: 18000, committed: 18000, paid: 18000, adjustment: 0, dueDate: "2026-06-18", vendor: "拾光设计", note: "含平面、施工图和三次现场交底" },
+    { id: "b2", categoryId: "construction", name: "拆改与清运", budgeted: 12000, committed: 12000, paid: 12000, adjustment: 0, dueDate: "2026-07-02", vendor: "项目施工队", note: "已结清" },
+    { id: "b3", categoryId: "construction", name: "水电人工与施工", budgeted: 28000, committed: 28000, paid: 20000, adjustment: 2400, dueDate: "2026-08-02", vendor: "项目施工队", note: "增项待复核：厨房新增回路" },
+    { id: "b4", categoryId: "construction", name: "泥瓦施工", budgeted: 30000, committed: 28000, paid: 8000, adjustment: 0, dueDate: "2026-08-25", vendor: "项目施工队", note: "按进度分三期支付" },
+    { id: "b5", categoryId: "construction", name: "木作、油漆及收尾", budgeted: 33000, committed: 0, paid: 0, adjustment: 0, dueDate: "2026-09-28", vendor: "", note: "待水电结束后确认工作量" },
+    { id: "b6", categoryId: "main-material", name: "厨卫瓷砖", budgeted: 32000, committed: 31000, paid: 18000, adjustment: 0, dueDate: "2026-08-05", vendor: "马可波罗", note: "预留 8% 损耗" },
+    { id: "b7", categoryId: "main-material", name: "地板与踢脚线", budgeted: 18000, committed: 0, paid: 0, adjustment: 0, dueDate: "2026-09-20", vendor: "", note: "正在比较环保等级与安装辅料" },
+    { id: "b8", categoryId: "main-material", name: "室内门与窗套", budgeted: 16000, committed: 15800, paid: 10000, adjustment: 0, dueDate: "2026-09-10", vendor: "森木门业", note: "复尺后付尾款" },
+    { id: "b9", categoryId: "main-material", name: "橱柜定制", budgeted: 16000, committed: 16000, paid: 16000, adjustment: 0, dueDate: "2026-09-18", vendor: "简木定制", note: "五金升级费用已含" },
+    { id: "b15", categoryId: "main-material", name: "卫浴洁具与浴室柜", budgeted: 16000, committed: 12800, paid: 8000, adjustment: 0, dueDate: "2026-09-22", vendor: "恒洁卫浴", note: "安装完成后支付尾款" },
+    { id: "b10", categoryId: "auxiliary-material", name: "防水、腻子与辅料", budgeted: 16000, committed: 12840, paid: 6840, adjustment: 0, dueDate: "2026-08-12", vendor: "本地建材仓", note: "按实际进场批次结算" },
+    { id: "b11", categoryId: "furniture", name: "全屋成品家具", budgeted: 35000, committed: 0, paid: 0, adjustment: 0, dueDate: "2026-10-08", vendor: "", note: "沙发、床、餐桌椅" },
+    { id: "b12", categoryId: "appliance", name: "厨房及生活家电", budgeted: 32000, committed: 23800, paid: 10000, adjustment: 0, dueDate: "2026-10-02", vendor: "京东家电", note: "已付预售定金" },
+    { id: "b13", categoryId: "soft-decoration", name: "窗帘、灯具与软装", budgeted: 12000, committed: 0, paid: 0, adjustment: 0, dueDate: "2026-10-15", vendor: "", note: "入住前集中采购" },
+    { id: "b14", categoryId: "other-budget", name: "保洁、搬运与备用金", budgeted: 6000, committed: 0, paid: 0, adjustment: 0, dueDate: "2026-10-22", vendor: "", note: "用于未预见零星支出" },
+  ],
+  issues: [
+    { id: "i1", title: "客厅电视墙线盒高低不齐", space: "客厅", severity: "important", status: "fixing", dueDate: "2026-07-30" },
+    { id: "i2", title: "次卫排水管口保护缺失", space: "次卫", severity: "normal", status: "recheck", dueDate: "2026-07-29" },
+  ],
+  journals: [
+    { id: "j1", date: "2026-07-27", title: "水电巡查", summary: "核对客厅与卧室插座位置，发现电视墙两个线盒高度不一致，已通知工长调整。", stageId: "plumbing", photoCount: 0 },
+    { id: "j2", date: "2026-07-25", title: "水电材料进场", summary: "核对电线规格、阻燃管和水管批次，型号与报价单一致。", stageId: "plumbing", photoCount: 0 },
+  ],
+  blueprints: [],
+  updatedAt: "2026-07-28T09:42:00+08:00",
+};
+
+/** 新注册用户使用的空白初始数据，只包含参考分类不含任何 mock 内容 */
+export const emptyInitialData: RenovationData = {
+  version: 4,
+  project: {
+    name: "我的装修项目",
+    homeType: "",
+    area: 0,
+    budget: 0,
+    spent: 0,
+    startDate: new Date().toISOString().slice(0, 10),
+    targetDate: "",
+  },
+  stages: [],
+  tasks: [],
+  inspections: [],
+  materialCategories: defaultMaterialCategories,
+  materials: [],
+  budgetCategories: defaultBudgetCategories,
+  budgetItems: [],
+  issues: [],
+  journals: [],
+  blueprints: [],
+  updatedAt: new Date().toISOString(),
+};

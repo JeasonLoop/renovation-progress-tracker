@@ -1,0 +1,2 @@
+ADMIN_PASSWORD_HASH=pbkdf2_sha256$100000$replace-with-base64url-salt$replace-with-base64url-hash
+SESSION_SECRET=replace-with-at-least-32-random-bytes
