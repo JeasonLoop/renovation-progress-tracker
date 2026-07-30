@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowSquareOut,
   Blueprint,
   BookOpenText,
   CalendarCheck,
@@ -294,6 +295,9 @@ export function RenovationApp() {
             <button className="mobile-project-edit" type="button" onClick={() => setShowProjectModal(true)} aria-label="编辑房屋信息" title="编辑房屋信息"><HouseLine size={18} /></button>
           </div>
           <div className="topbar-actions">
+            <a className="friend-link" href="https://linux.do/" target="_blank" rel="noreferrer" aria-label="访问 linux.do 友情链接">
+              linux.do <ArrowSquareOut size={15} weight="bold" />
+            </a>
             <button className={`save-state sync-state sync-${syncStatus}`} type="button" onClick={handleSyncStatusClick} disabled={syncStatus !== "offline" && syncStatus !== "conflict"} title={syncPresentation[syncStatus].label}>
               <SyncIcon size={16} weight="fill" /><span>{syncPresentation[syncStatus].label}</span>
             </button>
