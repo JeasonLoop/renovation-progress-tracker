@@ -2,20 +2,12 @@
 
 import Image from "next/image";
 import { ArrowRight, CheckCircle, Clock, CurrencyCny, Plus, Warning } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { RenovationData, ViewId } from "@/lib/types";
 import { deriveProjectProgress } from "@/lib/progress";
 import { StatusTag } from "../ui";
 
 const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=82";
-
-function findLatestJournalPhoto(data: RenovationData): string | null {
-  const sorted = [...data.journals].sort((a, b) => b.date.localeCompare(a.date));
-  for (const entry of sorted) {
-    if (entry.attachments?.length) return entry.attachments[0].url;
-  }
-  return null;
-}
 
 const currency = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY", maximumFractionDigits: 0 });
 
@@ -27,7 +19,7 @@ export function OverviewView({ data, completion, onNavigate, onAddTask }: { data
   const failedChecks = data.inspections.filter((item) => item.status === "failed");
   const uncoveredFailedChecks = failedChecks.filter((check) => !openIssues.some((issue) => issue.inspectionId === check.id || issue.title.includes(check.title)));
   const paid = data.budgetItems.reduce((sum, item) => sum + item.paid, 0);
-  const heroImage = useMemo(() => findLatestJournalPhoto(data) ?? DEFAULT_HERO_IMAGE, [data.journals]);
+  const heroImage = DEFAULT_HERO_IMAGE;
 
   useEffect(() => {
     const today = new Date();
