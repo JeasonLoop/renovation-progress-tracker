@@ -449,10 +449,10 @@ h1, h2, h3, p { margin: 0; }
 .timeline-line i { width: 9px; height: 9px; margin-top: 7px; position: relative; z-index: 1; border: 2px solid var(--bg); border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .journal-body { align-self: start; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-strong); }
 .journal-body header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.journal-body header > div { display: grid; gap: 5px; }
+.journal-body header > div:first-child { display: grid; gap: 5px; min-width: 0; }
 .journal-body h2 { font-size: 14px; }
 .journal-body header span { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 9px; }
-.record-header-actions, .issue-actions { display: flex; align-items: center; gap: 8px; }
+.record-header-actions, .issue-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap; }
 .record-header-actions .inline-delete-button, .issue-actions .inline-delete-button { width: 34px; height: 34px; }
 .journal-body > p { max-width: 72ch; margin: 15px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .rich-text-editor { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); }
