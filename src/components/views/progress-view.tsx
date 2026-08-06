@@ -129,7 +129,13 @@ function StageManagerModal({ data, onClose, onSave }: { data: RenovationData; on
     setNewStageName("");
   };
 
-  const save = () => onSave(stages.map((stage, index) => ({ ...stage, name: stage.name.trim() || `未命名阶段 ${index + 1}`, order: index + 1 })));
+  const save = () => {
+    const pendingName = newStageName.trim();
+    const nextStages = pendingName
+      ? [...stages, { id: crypto.randomUUID(), name: pendingName, order: stages.length + 1, status: "upcoming" as const }]
+      : stages;
+    onSave(nextStages.map((stage, index) => ({ ...stage, name: stage.name.trim() || `未命名阶段 ${index + 1}`, order: index + 1 })));
+  };
 
   return (
     <Modal title="管理装修阶段" onClose={onClose}>
