@@ -455,6 +455,25 @@ h1, h2, h3, p { margin: 0; }
 .record-header-actions, .issue-actions { display: flex; align-items: center; gap: 8px; }
 .record-header-actions .inline-delete-button, .issue-actions .inline-delete-button { width: 34px; height: 34px; }
 .journal-body > p { max-width: 72ch; margin: 15px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.rich-text-editor { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); }
+.rich-text-toolbar { display: flex; align-items: center; gap: 3px; padding: 6px; border-bottom: 1px solid var(--line); background: var(--surface-subtle); }
+.rich-text-toolbar button { width: 30px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; }
+.rich-text-toolbar button:hover, .rich-text-toolbar button.active { background: var(--accent-soft); color: var(--accent); }
+.rich-text-toolbar button:disabled { opacity: .35; cursor: not-allowed; }
+.rich-text-toolbar-divider { width: 1px; height: 18px; margin-inline: 4px; background: var(--line-strong); }
+.rich-text-editor .ProseMirror { min-height: 170px; padding: 12px; outline: 0; color: var(--text); font-size: 12px; line-height: 1.7; }
+.rich-text-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; height: 0; color: var(--muted); pointer-events: none; }
+.rich-text-editor .ProseMirror p { margin: 0 0 8px; }
+.rich-text-editor .ProseMirror p:last-child { margin-bottom: 0; }
+.rich-text-editor .ProseMirror ul, .rich-text-editor .ProseMirror ol { padding-left: 22px; margin: 8px 0; }
+.rich-text-editor .ProseMirror blockquote { margin: 8px 0; padding-left: 10px; border-left: 3px solid var(--accent); color: var(--muted); }
+.rich-text-editor-loading { min-height: 226px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--muted); font-size: 12px; }
+.journal-body .rich-text-viewer { max-width: 72ch; margin: 15px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.rich-text-viewer .ProseMirror p { margin: 0 0 7px; }
+.rich-text-viewer .ProseMirror p:last-child { margin-bottom: 0; }
+.rich-text-viewer .ProseMirror ul, .rich-text-viewer .ProseMirror ol { padding-left: 22px; margin: 7px 0; }
+.rich-text-viewer .ProseMirror blockquote { margin: 7px 0; padding-left: 10px; border-left: 3px solid var(--accent); color: var(--muted); }
+.rich-text-viewer-fallback { max-width: 72ch; margin: 15px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
 .issue-list { display: grid; gap: 8px; }
 .issue-list article { min-height: 86px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-strong); }
 .issue-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; background: var(--surface-subtle); color: var(--muted); }
