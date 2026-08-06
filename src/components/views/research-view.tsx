@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Package, Plus, ShoppingCartSimple, SquaresFour, Trash } from "@phosphor-icons/react";
+import { Check, MagnifyingGlass, Package, Plus, ShoppingCartSimple, SquaresFour, Trash } from "@phosphor-icons/react";
 import { useMemo, useState, type FormEvent } from "react";
 import type { Attachment, Material, MaterialCategory, RenovationData } from "@/lib/types";
 import { deleteStoredAttachments, ImageAttachments } from "../image-attachments";
@@ -9,6 +9,7 @@ import { useOperationDialog } from "../operation-dialog";
 import { EmptyState, Modal, StatusTag } from "../ui";
 
 const currency = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY", maximumFractionDigits: 0 });
+const ALL_CATEGORY_ID = "all";
 
 /** 材料品类 → 预算分类 的默认映射 */
 function getBudgetCategoryForMaterial(materialCategoryId: string): string {
@@ -27,20 +28,27 @@ function getBudgetCategoryForMaterial(materialCategoryId: string): string {
 }
 
 export function ResearchView({ data, updateData }: { data: RenovationData; updateData: (updater: (data: RenovationData) => RenovationData) => void }) {
-  const [selectedCategoryId, setSelectedCategoryId] = useState(() => data.materialCategories[0]?.id ?? "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_ID);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const { confirm } = useOperationDialog();
-  const selectedCategory = data.materialCategories.find((category) => category.id === selectedCategoryId) ?? data.materialCategories[0];
+  const selectedCategory = selectedCategoryId === ALL_CATEGORY_ID ? undefined : data.materialCategories.find((category) => category.id === selectedCategoryId);
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     data.materials.forEach((material) => counts.set(material.categoryId, (counts.get(material.categoryId) ?? 0) + 1));
     return counts;
   }, [data.materials]);
-  const visibleMaterials = useMemo(
-    () => data.materials.filter((material) => material.categoryId === selectedCategory?.id),
-    [data.materials, selectedCategory?.id],
-  );
+  const visibleMaterials = useMemo(() => {
+    const keyword = searchQuery.trim().toLocaleLowerCase();
+    return data.materials.filter((material) => {
+      if (selectedCategoryId !== ALL_CATEGORY_ID && material.categoryId !== selectedCategoryId) return false;
+      if (!keyword) return true;
+      const categoryName = data.materialCategories.find((category) => category.id === material.categoryId)?.name ?? "";
+      return [material.brand, material.model, material.usage, material.note, material.warranty, material.leadTime, categoryName]
+        .some((value) => value.toLocaleLowerCase().includes(keyword));
+    });
+  }, [data.materialCategories, data.materials, searchQuery, selectedCategoryId]);
 
   const selectMaterial = async (id: string) => {
     const material = data.materials.find((item) => item.id === id);
@@ -117,10 +125,13 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
     <div className="content-stack research-workspace">
       <section className="material-category-strip" aria-label="材料品类">
         <div className="material-category-tabs" role="tablist" aria-label="选择材料品类">
+          <button type="button" role="tab" aria-selected={selectedCategoryId === ALL_CATEGORY_ID} className={selectedCategoryId === ALL_CATEGORY_ID ? "active" : ""} onClick={() => setSelectedCategoryId(ALL_CATEGORY_ID)}>
+            <span>全部</span><small>{data.materials.length}</small>
+          </button>
           {data.materialCategories.map((category) => {
             const count = categoryCounts.get(category.id) ?? 0;
             return (
-              <button key={category.id} type="button" role="tab" aria-selected={selectedCategory?.id === category.id} className={selectedCategory?.id === category.id ? "active" : ""} onClick={() => setSelectedCategoryId(category.id)}>
+              <button key={category.id} type="button" role="tab" aria-selected={selectedCategoryId === category.id} className={selectedCategoryId === category.id ? "active" : ""} onClick={() => setSelectedCategoryId(category.id)}>
                 <span>{category.name}</span><small>{count}</small>
               </button>
             );
@@ -129,20 +140,21 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
         <button className="secondary-button add-category-button" type="button" onClick={() => setShowCategoryModal(true)}><Plus size={17} /> 新增品类</button>
       </section>
 
-      {selectedCategory ? (
+      {data.materialCategories.length ? (
         <>
           <section className="research-intro">
-            <div><h2>{selectedCategory.name}候选对比</h2><p>{selectedCategory.guidance}</p></div>
-            <button className="primary-button" type="button" onClick={() => setShowMaterialModal(true)}><Plus size={17} weight="bold" /> 添加候选</button>
+            <div><h2>{selectedCategory ? `${selectedCategory.name}候选对比` : "全部候选对比"}</h2><p>{selectedCategory?.guidance ?? "跨品类查看全部候选，可按品牌、型号、用途或备注快速查找。"}</p></div>
+            <div className="research-actions"><label className="material-search"><MagnifyingGlass size={17} /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="搜索品牌、型号、用途或备注" aria-label="搜索材料候选" /></label><button className="primary-button" type="button" onClick={() => setShowMaterialModal(true)} disabled={!selectedCategory} title={selectedCategory ? "添加候选" : "请先选择具体品类"}><Plus size={17} weight="bold" /> 添加候选</button></div>
           </section>
 
           {visibleMaterials.length > 0 ? (
             <section className="compare-grid">
-              {visibleMaterials.map((material) => (
-                <article className={material.status === "selected" ? "material-option selected" : "material-option"} key={material.id}>
+              {visibleMaterials.map((material) => {
+                const materialCategory = data.materialCategories.find((category) => category.id === material.categoryId);
+                return <article className={material.status === "selected" ? "material-option selected" : "material-option"} key={material.id}>
                   <header><div><span>{material.brand}</span><h3>{material.model}</h3></div>{material.status === "selected" ? <StatusTag tone="success">已选定</StatusTag> : null}</header>
                   {material.attachments?.length ? <PreviewableImageList className="material-photo-strip" images={material.attachments.map((attachment) => ({ src: attachment.url, alt: attachment.name || `${material.brand} ${material.model}` }))} /> : null}
-                  <strong className="material-price">{currency.format(material.price)}<small> / {selectedCategory.unit}</small></strong>
+                  <strong className="material-price">{currency.format(material.price)}<small> / {materialCategory?.unit ?? "件"}</small></strong>
                   <dl>
                     <div><dt>使用位置</dt><dd>{material.usage}</dd></div>
                     <div><dt>交期</dt><dd>{material.leadTime}</dd></div>
@@ -150,16 +162,16 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
                     <div><dt>个人记录</dt><dd>{material.note}</dd></div>
                   </dl>
                   <div className="material-option-actions"><button className={material.status === "selected" ? "selected-button" : "secondary-button"} type="button" onClick={() => selectMaterial(material.id)}>{material.status === "selected" ? <><Check size={17} weight="bold" /> 当前选择</> : "选定这个方案"}</button><button className="inline-delete-button" type="button" onClick={() => void removeMaterial(material)} aria-label={`删除候选${material.brand} ${material.model}`} title="删除候选"><Trash size={17} /></button></div>
-                </article>
-              ))}
+                </article>;
+              })}
             </section>
           ) : (
             <section className="material-empty-panel">
-              <EmptyState icon={Package} title={`还没有${selectedCategory.name}候选`} description="把正在看的品牌、型号和报价记下来，后面可以放在一起比较。" action={<button className="primary-button" type="button" onClick={() => setShowMaterialModal(true)}><Plus size={17} /> 添加第一个候选</button>} />
+              <EmptyState icon={Package} title={searchQuery.trim() ? "没有找到匹配的候选" : `还没有${selectedCategory?.name ?? "材料"}候选`} description={searchQuery.trim() ? "换个关键词，或切换到其他材料品类继续查找。" : "把正在看的品牌、型号和报价记下来，后面可以放在一起比较。"} action={selectedCategory && !searchQuery.trim() ? <button className="primary-button" type="button" onClick={() => setShowMaterialModal(true)}><Plus size={17} /> 添加第一个候选</button> : undefined} />
             </section>
           )}
 
-          <section className="purchase-rail"><ShoppingCartSimple size={24} /><div><strong>{selectedCategory.name}采购提醒</strong><p>{selectedCategory.guidance}</p></div></section>
+          {selectedCategory ? <section className="purchase-rail"><ShoppingCartSimple size={24} /><div><strong>{selectedCategory.name}采购提醒</strong><p>{selectedCategory.guidance}</p></div></section> : null}
         </>
       ) : (
         <section className="material-empty-panel"><EmptyState icon={SquaresFour} title="先创建一个材料品类" description="例如瓷砖、地板、卫浴或你想单独管理的其他物品。" action={<button className="primary-button" type="button" onClick={() => setShowCategoryModal(true)}><Plus size={17} /> 新增品类</button>} /></section>
