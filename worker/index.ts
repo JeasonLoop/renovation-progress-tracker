@@ -47,6 +47,8 @@ const PASSWORD_MAX = 128;
 const PASSWORD_ITERATIONS = 100_000;
 const INITIAL_ADMIN_USERNAME = "admin";
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const ALLOWED_DOCUMENT_TYPES = new Set(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "text/plain", "text/csv"]);
+const ALLOWED_UPLOAD_TYPES = new Set([...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOCUMENT_TYPES]);
 
 function base64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -287,7 +289,7 @@ function hasValidImageSignature(bytes: Uint8Array, type: string): boolean {
 async function uploadImage(request: Request, env: Env): Promise<Response> {
   if (!requestOriginIsValid(request)) return json({ error: "请求来源无效" }, 403);
   const contentLength = Number(request.headers.get("Content-Length") ?? 0);
-  if (contentLength > MAX_UPLOAD_BYTES + 64 * 1024) return json({ error: "图片不能超过 8 MB" }, 413);
+  if (contentLength > MAX_UPLOAD_BYTES + 64 * 1024) return json({ error: "文件不能超过 8 MB" }, 413);
   let form: FormData;
   try {
     form = await request.formData();
@@ -295,11 +297,10 @@ async function uploadImage(request: Request, env: Env): Promise<Response> {
     return json({ error: "上传内容无效" }, 400);
   }
   const file = form.get("file");
-  if (!(file instanceof File) || !ALLOWED_IMAGE_TYPES.has(file.type) || file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return json({ error: "仅支持 8 MB 内的 JPG、PNG、WebP 或 GIF 图片" }, 400);
-  // MIME headers are user-controlled, so verify a small magic-byte signature
-  // before storing the object in the private KV namespace.
+  if (!(file instanceof File) || !ALLOWED_UPLOAD_TYPES.has(file.type) || file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return json({ error: "仅支持 8 MB 内的图片、PDF、Word、Excel、PowerPoint、TXT 或 CSV 文件" }, 400);
+  // MIME headers are user-controlled, so verify image signatures before storing.
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!hasValidImageSignature(bytes, file.type)) return json({ error: "图片内容与文件类型不一致" }, 400);
+  if (ALLOWED_IMAGE_TYPES.has(file.type) && !hasValidImageSignature(bytes, file.type)) return json({ error: "图片内容与文件类型不一致" }, 400);
   const id = crypto.randomUUID();
   const key = `upload:${id}`;
   const metadata: UploadMetadata = { contentType: file.type, name: file.name.slice(0, 180), size: file.size, uploadedAt: new Date().toISOString() };
@@ -311,7 +312,9 @@ async function serveUpload(id: string, env: Env): Promise<Response> {
   if (!/^[0-9a-f-]{36}$/.test(id)) return new Response("Not found", { status: 404 });
   const object = await env.ZHUJI_UPLOADS.getWithMetadata<UploadMetadata>(`upload:${id}`, "arrayBuffer");
   if (!object.value || !object.metadata) return new Response("Not found", { status: 404 });
-  return new Response(object.value, { headers: { "Content-Type": object.metadata.contentType, "Content-Length": String(object.metadata.size), "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+  const headers: Record<string, string> = { "Content-Type": object.metadata.contentType, "Content-Length": String(object.metadata.size), "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
+  if (!ALLOWED_IMAGE_TYPES.has(object.metadata.contentType)) headers["Content-Disposition"] = "attachment";
+  return new Response(object.value, { headers });
 }
 
 async function deleteUpload(request: Request, id: string, env: Env): Promise<Response> {

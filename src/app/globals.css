@@ -674,7 +674,7 @@ h1, h2, h3, p { margin: 0; }
 }
 
 .blueprint-form-hint { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; padding-block: 2px; }
-.blueprint-category-choice .stage-choice-grid button { flex-direction: column; gap: 3px; padding-block: 9px; font-size: 11px; }
+.blueprint-category-choice .stage-choice-grid button { display: flex; align-items: center; justify-content: center; gap: 7px; padding-block: 9px; font-size: 11px; }
 .blueprint-category-strip { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .blueprint-category-tabs { min-width: 0; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 3px; scrollbar-width: thin; }
 .blueprint-category-tabs button { min-height: 38px; flex: 0 0 auto; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 6px; padding: 0 11px; background: var(--surface-strong); color: var(--muted); font-size: 11px; cursor: pointer; }
@@ -700,6 +700,13 @@ h1, h2, h3, p { margin: 0; }
 .blueprint-category-tag.category-other { background: var(--surface-subtle); color: var(--muted); }
 .blueprint-meta { display: flex; gap: 14px; color: var(--muted); font-size: 11px; }
 .blueprint-actions { display: flex; gap: 8px; margin-top: 4px; }
+.blueprint-document-list { display: grid; gap: 6px; }
+.blueprint-document-list a { display: flex; align-items: center; gap: 7px; min-width: 0; color: var(--accent); font-size: 12px; }
+.blueprint-document-list a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-document { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 64px; padding: 10px 36px 10px 12px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+.attachment-document > a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: 12px; }
+.attachment-document .attachment-document-download { display: grid; place-items: center; color: var(--muted); }
+.attachment-document .attachment-delete { position: absolute; top: 6px; right: 6px; }
 .blueprint-empty { padding-block: 30px; }
 
 /* 图纸资料 — 响应式 */

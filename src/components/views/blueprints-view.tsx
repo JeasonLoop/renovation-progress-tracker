@@ -5,6 +5,7 @@ import {
   Buildings,
   Camera,
   Compass,
+  FileText,
   HouseLine,
   ImageSquare,
   PencilSimple,
@@ -13,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { Attachment, Blueprint, RenovationData } from "@/lib/types";
-import { deleteStoredAttachments, ImageAttachments } from "../image-attachments";
+import { deleteStoredAttachments, ImageAttachments, isImageAttachment } from "../image-attachments";
 import { PreviewableImageList } from "../image-lightbox";
 import { useOperationDialog } from "../operation-dialog";
 import { EmptyState, Modal, StatusTag } from "../ui";
@@ -137,13 +138,15 @@ export function BlueprintsView({
           {visibleBlueprints.map((blueprint) => {
             const meta = categoryMeta[blueprint.category];
             const CatIcon = meta.icon;
+            const imageAttachments = blueprint.attachments.filter(isImageAttachment);
+            const documentAttachments = blueprint.attachments.filter((attachment) => !isImageAttachment(attachment));
             return (
               <article className="blueprint-card" key={blueprint.id}>
-                {blueprint.attachments.length > 0 ? (
+                {imageAttachments.length > 0 ? (
                   <div className="blueprint-preview">
                     <PreviewableImageList
                       className="blueprint-thumbnails"
-                      images={blueprint.attachments.map((att) => ({
+                      images={imageAttachments.map((att) => ({
                         src: att.url,
                         alt: att.name || blueprint.title,
                       }))}
@@ -164,8 +167,9 @@ export function BlueprintsView({
                     <h3>{blueprint.title}</h3>
                   </header>
                   {blueprint.description ? <p>{blueprint.description}</p> : null}
+                  {documentAttachments.length ? <div className="blueprint-document-list">{documentAttachments.map((attachment) => <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer"><FileText size={15} /><span>{attachment.name}</span></a>)}</div> : null}
                   <div className="blueprint-meta">
-                    <small>{blueprint.attachments.length} 张图片</small>
+                    <small>{imageAttachments.length} 张图片 · {documentAttachments.length} 个文件</small>
                     <small>上传于 {new Date(blueprint.uploadedAt).toLocaleDateString("zh-CN")}</small>
                   </div>
                   <div className="blueprint-actions">
@@ -306,13 +310,14 @@ function BlueprintModal({
           <ImageAttachments
             value={attachments}
             onChange={setAttachments}
-            label="图纸图片"
+            label="图纸资料"
             max={10}
+            allowDocuments
           />
         </div>
         <div className="blueprint-form-hint field-full">
-          <Camera size={16} />
-          <span>支持户型图、设计图、效果图等图片格式，可上传多张。</span>
+          <FileText size={16} />
+          <span>支持图片、PDF、Word、Excel、PowerPoint、TXT 和 CSV 格式，可上传多份。</span>
         </div>
         <div className="form-actions field-full">
           <button className="secondary-button" type="button" onClick={onClose}>

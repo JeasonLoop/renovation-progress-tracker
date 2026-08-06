@@ -1,12 +1,29 @@
 "use client";
 
-import { Camera, ImageSquare, Trash, UploadSimple } from "@phosphor-icons/react";
+import { Camera, DownloadSimple, FileText, ImageSquare, Trash, UploadSimple } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import type { Attachment } from "@/lib/types";
 import { ImageLightbox } from "./image-lightbox";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const DOCUMENT_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv",
+]);
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
+const DOCUMENT_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv";
+
+export function isImageAttachment(attachment: Attachment): boolean {
+  return IMAGE_TYPES.has(attachment.type);
+}
 
 function localAttachment(file: File): Promise<Attachment> {
   return new Promise((resolve, reject) => {
@@ -40,19 +57,21 @@ export function deleteStoredAttachments(attachments: Attachment[] | undefined): 
   return deleteStoredUrls((attachments ?? []).map((attachment) => attachment.url));
 }
 
-export function ImageAttachments({ value, onChange, label = "现场照片", max = 6, compact = false }: { value: Attachment[]; onChange: (attachments: Attachment[]) => void; label?: string; max?: number; compact?: boolean }) {
+export function ImageAttachments({ value, onChange, label = "现场照片", max = 6, compact = false, allowDocuments = false }: { value: Attachment[]; onChange: (attachments: Attachment[]) => void; label?: string; max?: number; compact?: boolean; allowDocuments?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const imageAttachments = value.filter(isImageAttachment);
 
   const addFiles = async (files: FileList | null) => {
     if (!files || busy) return;
     setError("");
     const selected = Array.from(files).slice(0, Math.max(max - value.length, 0));
-    const invalid = selected.find((file) => !ALLOWED_TYPES.has(file.type) || file.size <= 0 || file.size > MAX_FILE_BYTES);
+    const allowedTypes = allowDocuments ? new Set([...IMAGE_TYPES, ...DOCUMENT_TYPES]) : IMAGE_TYPES;
+    const invalid = selected.find((file) => !allowedTypes.has(file.type) || file.size <= 0 || file.size > MAX_FILE_BYTES);
     if (invalid) {
-      setError("仅支持 8 MB 内的 JPG、PNG、WebP 或 GIF 图片");
+      setError(allowDocuments ? "仅支持 8 MB 内的图片、PDF、Word、Excel、PowerPoint、TXT 或 CSV 文件" : "仅支持 8 MB 内的 JPG、PNG、WebP 或 GIF 图片");
       return;
     }
     if (selected.length === 0) return;
@@ -77,10 +96,10 @@ export function ImageAttachments({ value, onChange, label = "现场照片", max 
   return (
     <div className={compact ? "attachment-field compact" : "attachment-field"}>
       <div className="attachment-field-heading"><span><ImageSquare size={16} />{label}</span><small>{value.length}/{max}</small></div>
-      {value.length ? <div className="attachment-grid">{value.map((attachment, index) => <figure key={attachment.id}><button className="attachment-preview" type="button" onClick={() => setPreviewIndex(index)} aria-label={`查看大图：${attachment.name || label}`}><img src={attachment.url} alt={attachment.name || label} loading="lazy" /></button><button className="attachment-delete" type="button" onClick={(event) => { event.stopPropagation(); remove(attachment); }} aria-label={`删除图片 ${attachment.name}`} title="删除图片"><Trash size={15} /></button></figure>)}</div> : null}
-      {value.length < max ? <><input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple capture={compact ? undefined : "environment"} hidden onChange={(event) => void addFiles(event.target.files)} /><button className="attachment-add" type="button" disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? <><UploadSimple size={16} />正在上传…</> : <><Camera size={16} />添加图片</>}</button></> : null}
+      {value.length ? <div className="attachment-grid">{value.map((attachment) => isImageAttachment(attachment) ? <figure key={attachment.id}><button className="attachment-preview" type="button" onClick={() => setPreviewIndex(imageAttachments.findIndex((item) => item.id === attachment.id))} aria-label={`查看大图：${attachment.name || label}`}><img src={attachment.url} alt={attachment.name || label} loading="lazy" /></button><button className="attachment-delete" type="button" onClick={(event) => { event.stopPropagation(); remove(attachment); }} aria-label={`删除图片 ${attachment.name}`} title="删除图片"><Trash size={15} /></button></figure> : <div className="attachment-document" key={attachment.id}><FileText size={25} /><a href={attachment.url} target="_blank" rel="noreferrer" title={`打开 ${attachment.name}`}>{attachment.name}</a><a className="attachment-document-download" href={attachment.url} download aria-label={`下载 ${attachment.name}`} title="下载文件"><DownloadSimple size={16} /></a><button className="attachment-delete" type="button" onClick={() => remove(attachment)} aria-label={`删除文件 ${attachment.name}`} title="删除文件"><Trash size={15} /></button></div>)}</div> : null}
+      {value.length < max ? <><input ref={inputRef} type="file" accept={allowDocuments ? `${IMAGE_ACCEPT},${DOCUMENT_ACCEPT}` : IMAGE_ACCEPT} multiple capture={allowDocuments || compact ? undefined : "environment"} hidden onChange={(event) => void addFiles(event.target.files)} /><button className="attachment-add" type="button" disabled={busy} onClick={() => inputRef.current?.click()}>{busy ? <><UploadSimple size={16} />正在上传…</> : <>{allowDocuments ? <UploadSimple size={16} /> : <Camera size={16} />}{allowDocuments ? "添加文件" : "添加图片"}</>}</button></> : null}
       {error ? <p className="attachment-error" role="alert">{error}</p> : null}
-      {previewIndex !== null && value.length ? <ImageLightbox images={value.map((attachment) => ({ src: attachment.url, alt: attachment.name || label }))} activeIndex={Math.min(previewIndex, value.length - 1)} onIndexChange={setPreviewIndex} onClose={() => setPreviewIndex(null)} /> : null}
+      {previewIndex !== null && imageAttachments.length ? <ImageLightbox images={imageAttachments.map((attachment) => ({ src: attachment.url, alt: attachment.name || label }))} activeIndex={Math.min(previewIndex, imageAttachments.length - 1)} onIndexChange={setPreviewIndex} onClose={() => setPreviewIndex(null)} /> : null}
     </div>
   );
 }
