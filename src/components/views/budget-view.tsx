@@ -16,7 +16,8 @@ import {
 } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import type { BudgetCategory, BudgetItem, RenovationData } from "@/lib/types";
-import { deleteStoredAttachments, ImageAttachments } from "../image-attachments";
+import { deleteStoredAttachments, ImageAttachments, isImageAttachment } from "../image-attachments";
+import { PreviewableImageList } from "../image-lightbox";
 import { useOperationDialog } from "../operation-dialog";
 import { EmptyState, Modal, StatusTag } from "../ui";
 
@@ -157,12 +158,18 @@ export function BudgetView({ data, updateData }: { data: RenovationData; updateD
             <div className="budget-table-head"><span className="selectable-heading"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="全选当前预算项" />项目 / 分类</span><span>预算</span><span>签约</span><span>已付</span><span>待付</span><span>操作</span></div>
             {visibleItems.map((item) => {
               const category = data.budgetCategories.find((candidate) => candidate.id === item.categoryId);
+              const sourceMaterial = item.sourceMaterialId
+                ? data.materials.find((material) => material.id === item.sourceMaterialId)
+                : item.note.startsWith("来自材料调研")
+                  ? data.materials.find((material) => `${material.brand} ${material.model}`.trim() === item.name)
+                  : undefined;
+              const materialImages = sourceMaterial?.attachments?.filter(isImageAttachment) ?? [];
               const adjusted = item.budgeted + item.adjustment;
               const pending = Math.max(item.committed - item.paid, 0);
               const isOver = item.committed > adjusted;
               return (
                 <article className="budget-row" key={item.id}>
-                  <div className="budget-item-main selectable-item"><input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelected(item.id)} aria-label={`选择预算项${item.name}`} /><div><strong>{item.name}</strong><span>{category?.name ?? "未分类"}{item.vendor ? ` · ${item.vendor}` : ""}</span>{item.note ? <small>{item.note}</small> : null}{item.attachments?.length ? <small><Camera size={12} /> {item.attachments.length} 张票据或报价</small> : null}</div></div>
+                  <div className="budget-item-main selectable-item"><input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelected(item.id)} aria-label={`选择预算项${item.name}`} /><div className="budget-item-content">{materialImages.length ? <PreviewableImageList className="budget-material-thumbnail" thumbnailLimit={1} images={materialImages.map((attachment) => ({ src: attachment.url, alt: `${item.name} 材料图片` }))} /> : null}<div><strong>{item.name}</strong><span>{category?.name ?? "未分类"}{item.vendor ? ` · ${item.vendor}` : ""}</span>{item.note ? <small>{item.note}</small> : null}{item.attachments?.length ? <small><Camera size={12} /> {item.attachments.length} 张票据或报价</small> : null}</div></div></div>
                   <div data-label="预算"><strong>{amount(adjusted)}</strong>{item.adjustment ? <small><ArrowCounterClockwise size={12} /> 调整 {item.adjustment > 0 ? "+" : ""}{amount(item.adjustment)}</small> : null}</div>
                   <div data-label="签约" className={isOver ? "amount-warning" : ""}><strong>{amount(item.committed)}</strong>{isOver ? <small><Warning size={12} /> 超预算</small> : null}</div>
                   <div data-label="已付"><strong>{amount(item.paid)}</strong></div>

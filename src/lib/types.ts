@@ -100,6 +100,8 @@ export interface BudgetItem {
   vendor: string;
   note: string;
   attachments?: Attachment[];
+  /** 从材料调研同步时保留来源，供预算清单展示材料缩略图。 */
+  sourceMaterialId?: string;
 }
 
 export interface Issue {

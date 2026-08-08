@@ -64,7 +64,7 @@ export function ImageLightbox({ images, activeIndex, onIndexChange, onClose }: {
   );
 }
 
-export function PreviewableImageList({ images, className }: { images: PreviewImage[]; className: string }) {
+export function PreviewableImageList({ images, className, thumbnailLimit }: { images: PreviewImage[]; className: string; thumbnailLimit?: number }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   if (!images.length) return null;
@@ -72,7 +72,7 @@ export function PreviewableImageList({ images, className }: { images: PreviewIma
   return (
     <>
       <div className={className}>
-        {images.map((image, index) => (
+        {images.slice(0, thumbnailLimit).map((image, index) => (
           <button key={`${image.src}-${index}`} className="preview-thumbnail" type="button" onClick={() => setActiveIndex(index)} aria-label={`查看大图：${image.alt}`}>
             <img src={image.src} alt={image.alt} loading="lazy" />
           </button>

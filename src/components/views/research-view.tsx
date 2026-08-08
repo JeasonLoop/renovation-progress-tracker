@@ -90,6 +90,7 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
             vendor: material.brand,
             note: `来自材料调研 · ${materialCategory?.name ?? ""} · ${material.usage}`,
             attachments: [],
+            sourceMaterialId: material.id,
           }, ...current.budgetItems],
         }));
       }
