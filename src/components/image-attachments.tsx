@@ -46,7 +46,14 @@ async function upload(file: File): Promise<Attachment> {
 }
 
 export async function deleteStoredUrls(urls: string[]): Promise<void> {
-  const stored = urls.filter((url) => url.startsWith("/api/uploads/"));
+  const stored = urls.map((value) => {
+    try {
+      const url = new URL(value, window.location.origin);
+      return url.origin === window.location.origin && url.pathname.startsWith("/api/uploads/") ? `${url.pathname}${url.search}` : null;
+    } catch {
+      return null;
+    }
+  }).filter((url): url is string => Boolean(url));
   await Promise.all(stored.map(async (url) => {
     const response = await fetch(url, { method: "DELETE", credentials: "same-origin" });
     if (!response.ok && response.status !== 404) throw new Error("图片删除失败，请稍后重试");

@@ -50,26 +50,24 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
     });
   }, [data.materialCategories, data.materials, searchQuery, selectedCategoryId]);
 
-  const selectMaterial = async (id: string) => {
+  const toggleMaterialSelection = async (id: string) => {
     const material = data.materials.find((item) => item.id === id);
+    if (!material) return;
+    const isSelected = material.status === "selected";
     updateData((current) => {
-      const targetCategoryId = current.materials.find((item) => item.id === id)?.categoryId;
       return {
         ...current,
         materials: current.materials.map((item) => ({
           ...item,
           status: item.id === id
-            ? "selected"
-            : item.categoryId === targetCategoryId && item.status === "selected"
-              ? "researching"
-              : item.status,
+            ? (item.status === "selected" ? "researching" : "selected")
+            : item.status,
         })),
       };
     });
-    // 选定后提示同步到预算
-    if (material && material.price > 0) {
+    // 选择后提示同步到预算；取消选择只改变本次调研状态。
+    if (!isSelected && material.price > 0) {
       const budgetCategoryId = getBudgetCategoryForMaterial(material.categoryId);
-      const existingItems = data.budgetItems.filter((item) => item.categoryId === budgetCategoryId);
       const materialCategory = data.materialCategories.find((cat) => cat.id === material.categoryId);
       const shouldSync = await confirm({
         title: "同步到预算清单？",
@@ -143,7 +141,7 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
       {data.materialCategories.length ? (
         <>
           <section className="research-intro">
-            <div><h2>{selectedCategory ? `${selectedCategory.name}候选对比` : "全部候选对比"}</h2><p>{selectedCategory?.guidance ?? "跨品类查看全部候选，可按品牌、型号、用途或备注快速查找。"}</p></div>
+            <div><h2>{selectedCategory ? `${selectedCategory.name}候选对比` : "全部候选对比"}</h2><p>{selectedCategory?.guidance ?? "跨品类查看全部候选，可按品牌、型号、用途或备注快速查找。"} 已选择 {visibleMaterials.filter((material) => material.status === "selected").length} 个方案。</p></div>
             <div className="research-actions"><label className="material-search"><MagnifyingGlass size={17} /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="搜索品牌、型号、用途或备注" aria-label="搜索材料候选" /></label><button className="primary-button" type="button" onClick={() => setShowMaterialModal(true)} disabled={!selectedCategory} title={selectedCategory ? "添加候选" : "请先选择具体品类"}><Plus size={17} weight="bold" /> 添加候选</button></div>
           </section>
 
@@ -152,7 +150,7 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
               {visibleMaterials.map((material) => {
                 const materialCategory = data.materialCategories.find((category) => category.id === material.categoryId);
                 return <article className={material.status === "selected" ? "material-option selected" : "material-option"} key={material.id}>
-                  <header><div><span>{material.brand}</span><h3>{material.model}</h3></div>{material.status === "selected" ? <StatusTag tone="success">已选定</StatusTag> : null}</header>
+                  <header><div><span>{material.brand}</span><h3>{material.model}</h3></div>{material.status === "selected" ? <StatusTag tone="success">已选择</StatusTag> : null}</header>
                   {material.attachments?.length ? <PreviewableImageList className="material-photo-strip" images={material.attachments.map((attachment) => ({ src: attachment.url, alt: attachment.name || `${material.brand} ${material.model}` }))} /> : null}
                   <strong className="material-price">{currency.format(material.price)}<small> / {materialCategory?.unit ?? "件"}</small></strong>
                   <dl>
@@ -161,7 +159,7 @@ export function ResearchView({ data, updateData }: { data: RenovationData; updat
                     <div><dt>售后</dt><dd>{material.warranty}</dd></div>
                     <div><dt>个人记录</dt><dd>{material.note}</dd></div>
                   </dl>
-                  <div className="material-option-actions"><button className={material.status === "selected" ? "selected-button" : "secondary-button"} type="button" onClick={() => selectMaterial(material.id)}>{material.status === "selected" ? <><Check size={17} weight="bold" /> 当前选择</> : "选定这个方案"}</button><button className="inline-delete-button" type="button" onClick={() => void removeMaterial(material)} aria-label={`删除候选${material.brand} ${material.model}`} title="删除候选"><Trash size={17} /></button></div>
+                  <div className="material-option-actions"><button className={material.status === "selected" ? "selected-button" : "secondary-button"} type="button" onClick={() => void toggleMaterialSelection(material.id)}>{material.status === "selected" ? <><Check size={17} weight="bold" /> 已选择，点击取消</> : "选择这个方案"}</button><button className="inline-delete-button" type="button" onClick={() => void removeMaterial(material)} aria-label={`删除候选${material.brand} ${material.model}`} title="删除候选"><Trash size={17} /></button></div>
                 </article>;
               })}
             </section>

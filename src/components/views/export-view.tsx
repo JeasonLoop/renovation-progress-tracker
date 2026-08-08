@@ -3,7 +3,7 @@
 import { ArrowCounterClockwise, Database, FileCode, FileCsv, Printer, UploadSimple } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { clearRecoveryData, loadRecoveryData, parseImportData, saveRecoveryData } from "@/lib/storage";
-import type { RenovationData } from "@/lib/types";
+import type { Attachment, RenovationData } from "@/lib/types";
 import { useOperationDialog } from "../operation-dialog";
 import { StatusTag } from "../ui";
 
@@ -22,6 +22,26 @@ function csvCell(value: string | number) {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
 
+function portableUrl(value: string): string {
+  return value.startsWith("/api/uploads/") ? new URL(value, window.location.origin).toString() : value;
+}
+
+function portableAttachments(attachments: Attachment[] | undefined): Attachment[] | undefined {
+  return attachments?.map((attachment) => ({ ...attachment, url: portableUrl(attachment.url) }));
+}
+
+function createPortableBackup(data: RenovationData): RenovationData {
+  return {
+    ...data,
+    inspections: data.inspections.map((item) => ({ ...item, attachments: portableAttachments(item.attachments), evidence: item.evidence?.map(portableUrl) })),
+    materials: data.materials.map((item) => ({ ...item, attachments: portableAttachments(item.attachments) })),
+    budgetItems: data.budgetItems.map((item) => ({ ...item, attachments: portableAttachments(item.attachments) })),
+    issues: data.issues.map((item) => ({ ...item, attachments: portableAttachments(item.attachments) })),
+    journals: data.journals.map((item) => ({ ...item, attachments: portableAttachments(item.attachments) })),
+    blueprints: data.blueprints.map((item) => ({ ...item, attachments: portableAttachments(item.attachments) ?? [] })),
+  };
+}
+
 export function ExportView({ data, replaceData }: { data: RenovationData; replaceData: (data: RenovationData) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
@@ -32,7 +52,7 @@ export function ExportView({ data, replaceData }: { data: RenovationData; replac
   useEffect(() => setRecovery(loadRecoveryData()), []);
 
   const exportJson = () => {
-    downloadFile(`装修项目备份-${stamp}.json`, "application/json", JSON.stringify(data, null, 2));
+    downloadFile(`装修项目备份-${stamp}.json`, "application/json", JSON.stringify(createPortableBackup(data), null, 2));
     setMessage("完整备份已生成，请查看浏览器下载记录。");
   };
   const exportCsv = () => {
@@ -90,13 +110,13 @@ export function ExportView({ data, replaceData }: { data: RenovationData; replac
       </section>
       <section className="export-options">
         {recovery ? <article><ArrowCounterClockwise size={25} /><div><h3>恢复冲突前版本</h3><p>{recovery.label} · {new Date(recovery.createdAt).toLocaleString("zh-CN")}</p></div><button className="secondary-button" type="button" onClick={() => { replaceData(recovery.data); clearRecoveryData(); setRecovery(null); setMessage("已恢复冲突处理前保留的版本，并将重新同步到云端。"); }}>恢复版本</button></article> : null}
-        <article><FileCode size={25} /><div><h3>完整 JSON 备份</h3><p>保留所有数据和关联关系，可用于恢复项目。</p></div><button className="primary-button" type="button" onClick={exportJson}>下载备份</button></article>
+        <article><FileCode size={25} /><div><h3>跨账户迁移 JSON</h3><p>导出当前项目的完整数据；登录新账户后可在本页导入并同步。</p></div><button className="primary-button" type="button" onClick={exportJson}>下载项目 JSON</button></article>
         <article><FileCsv size={25} /><div><h3>任务表格</h3><p>导出为 CSV，可在 Excel 或其他表格软件中打开。</p></div><button className="secondary-button" type="button" onClick={exportCsv}>导出表格</button></article>
         <article><FileCsv size={25} /><div><h3>总体预算清单</h3><p>导出预算、合同、付款和供应商信息，方便对账。</p></div><button className="secondary-button" type="button" onClick={exportBudgetCsv}>导出预算</button></article>
         <article><Printer size={25} /><div><h3>打印项目摘要</h3><p>使用浏览器打印功能保存为 PDF，适合现场沟通。</p></div><button className="secondary-button" type="button" onClick={() => window.print()}>打印摘要</button></article>
       </section>
       {message ? <p className="export-feedback" role="status">{message}</p> : null}
-      <section className="import-zone"><UploadSimple size={25} /><div><h3>从备份恢复</h3><p>导入前请确认文件来源。有效备份会替换当前浏览器中的项目数据。</p></div><input ref={inputRef} type="file" accept="application/json,.json" onChange={(event) => void importFile(event.target.files?.[0])} hidden /><button className="secondary-button" type="button" onClick={() => inputRef.current?.click()}>选择备份文件</button></section>
+      <section className="import-zone"><UploadSimple size={25} /><div><h3>导入项目 JSON</h3><p>登录新账户后，选择此前下载的项目 JSON；导入会替换当前项目并同步到该账户。</p></div><input ref={inputRef} type="file" accept="application/json,.json" onChange={(event) => void importFile(event.target.files?.[0])} hidden /><button className="secondary-button" type="button" onClick={() => inputRef.current?.click()}>选择项目 JSON</button></section>
       <p className="privacy-note">项目数据会同步到登录账户的 Cloudflare 云端，并在这台设备保留离线缓存。重要节点仍建议下载完整备份。</p>
     </div>
   );

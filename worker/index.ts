@@ -305,7 +305,8 @@ async function uploadImage(request: Request, env: Env): Promise<Response> {
   const key = `upload:${id}`;
   const metadata: UploadMetadata = { contentType: file.type, name: file.name.slice(0, 180), size: file.size, uploadedAt: new Date().toISOString() };
   await env.ZHUJI_UPLOADS.put(key, bytes, { metadata });
-  return json({ attachment: { id, name: metadata.name, url: `/api/uploads/${id}`, type: metadata.contentType, size: metadata.size, uploadedAt: metadata.uploadedAt } }, 201);
+  const url = new URL(`/api/uploads/${id}`, request.url).toString();
+  return json({ attachment: { id, name: metadata.name, url, type: metadata.contentType, size: metadata.size, uploadedAt: metadata.uploadedAt } }, 201);
 }
 
 async function serveUpload(id: string, env: Env): Promise<Response> {
