@@ -437,6 +437,14 @@ export default {
       return addSecurityHeaders(json({ ok: true, passwordMin: PASSWORD_MIN }));
     }
 
+    // Exported project backups contain attachment URLs. Keep reads available to
+    // those opaque UUID links so a backup can be previewed after import on a
+    // different account or local development host; writes remain authenticated.
+    if (request.method === "GET" && url.pathname.startsWith("/api/uploads/")) {
+      const id = url.pathname.slice("/api/uploads/".length);
+      return addSecurityHeaders(await serveUpload(id, env));
+    }
+
     const session = await readSession(request, env);
     if (!session && !isAuthPage && !isPublicAsset) {
       if (url.pathname.startsWith("/api/")) return addSecurityHeaders(json({ error: "登录已失效" }, 401));
@@ -453,7 +461,6 @@ export default {
     if (session && url.pathname === "/api/uploads" && request.method === "POST") return addSecurityHeaders(await uploadImage(request, env));
     if (session && url.pathname.startsWith("/api/uploads/")) {
       const id = url.pathname.slice("/api/uploads/".length);
-      if (request.method === "GET") return addSecurityHeaders(await serveUpload(id, env));
       if (request.method === "DELETE") return addSecurityHeaders(await deleteUpload(request, id, env));
     }
     if (url.pathname.startsWith("/api/")) return addSecurityHeaders(json({ error: "接口不存在" }, 404));
